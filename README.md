@@ -1,6 +1,6 @@
 # GitHub Star 목록
 
-[목록 열기](https://jhny-kor.github.io/s/)
+[목록 열기](https://jhny-kor.github.io/star/)
 
 jhny-kor의 공개 Star 저장소를 역할·키워드·활용 상황으로 정리한 목록입니다.
 검색, 주 용도별 그룹, 키워드 색인, Excel 다운로드를 제공합니다.
