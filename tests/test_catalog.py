@@ -53,6 +53,16 @@ class CatalogTests(unittest.TestCase):
             for c in self.data["categories"]:
                 shard = json.loads((out / "categories" / (c["id"] + ".json")).read_text())
                 self.assertEqual(len(shard["repositories"]), c["count"])
+                markdown = (out / "categories" / (c["id"] + ".md")).read_text()
+                for option in c.get("subcategories", []):
+                    entries = [row for row in shard["repositories"] if row["subcategory"] == option["id"]]
+                    self.assertEqual(len(entries), option["count"])
+                    if entries:
+                        heading = f'## {md(option["name"])} ({len(entries)}개)\n'
+                        start = markdown.index(heading) + len(heading)
+                        section = markdown[start:].split("\n## ", 1)[0]
+                        for row in entries:
+                            self.assertIn(f'](../repos/{row["full_name"]}.md)', section)
             page = (out / "index.html").read_text()
             self.assertIn('href="/star/llms.txt"', page)
             self.assertIn('rel="describedby"', page)

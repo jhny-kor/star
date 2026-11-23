@@ -23,16 +23,29 @@ def load_catalog(path=ROOT / "catalog.json"):
     repos = data["repositories"]
     assert len({r["id"] for r in repos}) == len(repos), "duplicate repository id"
     assert len({r["full_name"].casefold() for r in repos}) == len(repos), "duplicate name"
+    subcategory_ids = {}
+    for category in categories:
+        options = category.get("subcategories", [])
+        keys = {option["id"] for option in options}
+        assert len(keys) == len(options), "duplicate subcategory"
+        assert all(re.fullmatch(r"[a-z0-9_]+", key) for key in keys), "unsafe subcategory"
+        subcategory_ids[category["id"]] = keys
     for r in repos:
         assert re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", r["full_name"]), "unsafe name"
         assert all(p not in (".", "..") for p in r["full_name"].split("/")), "unsafe path"
         assert r["category"] in ids, "unknown category"
+        options = subcategory_ids[r["category"]]
+        assert r.get("subcategory") in (options or {None}), "unknown or missing subcategory"
         assert r["url"] == "https://github.com/" + r["full_name"], "unexpected URL"
         assert r["readme_url"].startswith(r["url"] + "/"), "unexpected README URL"
         assert r["confidence"] in ("readme", "metadata", "uncertain"), "unknown confidence"
     assert data["meta"]["total_repositories"] == len(repos), "wrong total"
     for c in categories:
         assert c["count"] == sum(r["category"] == c["id"] for r in repos), "wrong category count"
+        for option in c.get("subcategories", []):
+            assert option["count"] == sum(
+                r["category"] == c["id"] and r.get("subcategory") == option["id"] for r in repos
+            ), "wrong subcategory count"
     return data
 
 

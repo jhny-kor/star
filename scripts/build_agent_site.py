@@ -82,9 +82,17 @@ def build(source=ROOT, out=ROOT / "_site"):
         write(out, f"categories/{cid}.json", json.dumps({"schema_version": 1, "category": c, "repositories": rows}, ensure_ascii=False, indent=2))
         parts = [f"# {md(c['name'])}", "", md(c["when"]), "", "[분야 목록](index.md)",
                  f"[분야 JSON]({cid}.json)", "", "설명은 후보 탐색용이며 실제 실행 시험 결과가 아닙니다.", ""]
-        for r in rows:
-            name = r["full_name"]
-            parts += [f"## [{md(name)}](../repos/{name}.md)", "", md(r["summary"]), "",
+        groups = [(sub["name"], [r for r in rows if r.get("subcategory") == sub["id"]])
+                  for sub in c.get("subcategories", []) if sub["count"]]
+        if groups:
+            index[-1] += " 하위 카테고리 · " + " / ".join(f"{md(name)} {len(entries)}개" for name, entries in groups)
+        for group_name, entries in groups or [(None, rows)]:
+            if group_name:
+                parts += [f"## {md(group_name)} ({len(entries)}개)", ""]
+            heading = "###" if group_name else "##"
+            for r in entries:
+                name = r["full_name"]
+                parts += [f"{heading} [{md(name)}](../repos/{name}.md)", "", md(r["summary"]), "",
                       f"- 활용 상황: {md(r['use_case'])}", f"- 키워드: {md(', '.join(r['keywords']))}",
                       f"- 근거 수준: {r['confidence']}; 보관됨: {str(r['archived']).lower()}", ""]
         write(out, f"categories/{cid}.md", "\n".join(parts))
